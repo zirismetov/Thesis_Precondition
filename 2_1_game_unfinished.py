@@ -113,8 +113,8 @@ class Character():
             # self.pos = np.array([int(x_values[0+x]), int(y_values[0+x])])
             # print(self.pos)
             # x += 1
+            plt.plot(x_values, y_values, c=self.color)
 
-        plt.plot(x_values, y_values, c=self.color)
 
     # def move(self):
     #     # vec3d = dot(self.R, vec3d)
@@ -128,19 +128,25 @@ class Asteroid(Character):
 
     def generate_geometry(self):
         a = []
-        step = 2*math.pi/20
+        pimult2 = 2*math.pi
         x1 = 5
         y1 = 3
         r = 1
         theta = 0
-        i = 0
-        while theta <= 2*math.pi:
+        while theta <= pimult2:
             x = x1 + r * np.cos(theta)
             y = y1 + r * np.sin(theta)
             a.append([x,y])
-            theta += step
-            if theta <= 2*math.pi:
-                 i += 1
+            if theta < pimult2:
+                 ran = np.random.randint(5, 25)
+                 step = pimult2/ran
+                 theta += step
+                 if theta > pimult2:
+                    theta = pimult2
+            elif theta == pimult2:
+                break
+
+
         self.geometry = np.array(a)
 
 class Player(Character):
