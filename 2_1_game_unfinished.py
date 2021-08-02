@@ -32,11 +32,14 @@ def scale_mat(sx, sy):
     return S
 
 def dot(X, Y):
+    result = np.array([])
     try:
-        Z = np.dot(X, Y)
-        # Z = sum([X[i][0] * Y[i] for i in range(len(Y[i]))])
-
-        return Z
+        # Z = np.dot(X, Y)
+        # return Z
+        for i in range(len(X)):
+            for j in range(len(Y[0])):
+                result[i][j] = getCell(matrixA, matrixB, i, j)
+            print(result[i])
     except NameError:
         print("errpr")
 
@@ -46,7 +49,6 @@ def vec2d_to_vec3d(vec2):
         [0, 1],
         [0, 0]
     ])
-    # 0 0 1 top down view ?
     vec3 = dot(I, vec2) + np.array([0, 0 ,1])
     return vec3
 
@@ -59,71 +61,62 @@ def vec3d_to_vec2d(vec3):
     vec2 = dot(I, vec3)
     return vec2
 
-A = np.array([
-    [1,2,3,4],
-    [1,2,3,4]
-])
-B = np.array([
-    [1,2,3],
-    [1,2,3],
-    [1,2,3],
-    [1,2,3]
-])
-
-C = dot(A, B)
-
-vec2 = np.array([1.0, 0])
-vec3 = vec2d_to_vec3d(vec2)
-vec2 = vec3d_to_vec2d(vec3)
-# exit()
-
-class Character(object):
+class Character():
     def __init__(self):
         super().__init__()
-        self.__angle = 3 * np.pi
-
+        self.__angle = 0
         self.geometry = []
-        self.color = 'r'
-
+        self.color = 'b'
         self.C = np.identity(3)
         self.R = np.identity(3)
         self.S = np.identity(3)
-        self.T = np.identity(3)
 
-        self.pos = np.array([5.0, 0.0])
-        self.dir_init = np.array([0.0, 1.0])
+
+        self.pos = np.array([0.0, 0.0])
+
+        self.dir_init = np.array([0.0, 0.1])
         self.dir = np.array(self.dir_init)
+
         self.speed = 0.1
 
         self.generate_geometry()
-        self.T = translation_mat(0.0, 0.0)
+
     def set_angle(self, angle):
         self.__angle = angle # encapsulation
-        self.R = rotation_mat(self.__angle)
 
+        self.R = rotation_mat(self.__angle)
+        # self.
+        self.pos = np.add(self.pos, self.dir)
+        self.T = translation_mat(self.pos[0], self.pos[1])
+        self.C = dot(self.T, self.R)
 
     def get_angle(self):
         return self.__angle
 
-    def set_T(self, T):
-        self.T = translation_mat(0.0, T)
-
-    def get_T(self):
-        return self.T
 
     def draw(self):
         x_values = []
         y_values = []
+
         for vec2d in self.geometry:
+
             vec3d = vec2d_to_vec3d(vec2d)
 
-            self.C = dot(self.T, self.R)
+            # self.R = rotation_mat(5)
+
             vec3d = dot(self.C, vec3d)
             vec2d = vec3d_to_vec2d(vec3d)
             x_values.append(vec2d[0])
             y_values.append(vec2d[1])
 
+            # x += 0.2
+
         plt.plot(x_values, y_values, c=self.color)
+
+
+
+    # def move(self):
+    #     self.T = translation_mat()
 
 
 class Asteroid(Character):
@@ -140,39 +133,34 @@ class Player(Character):
 
     def generate_geometry(self):
         self.geometry = np.array([
-            [-1, 0],
-            [1, 0],
-            [0, 1],
+             [-1, 0],
+             [1, 0],
+             [0, 1],
              [-1, 0]
         ])
 
 
 characters = []
 characters.append(Player())
-# ???? -1 why?
 player = characters[0]
 
 is_running = True
 def press(event):
     global is_running, player
     print('press', event.key)
-    if event.key == 'escape':
+    if event.key == 'p':
         is_running = False # quits app
     elif event.key == 'right':
         player.set_angle(player.get_angle() - 5)
     elif event.key == 'left':
         player.set_angle(player.get_angle() + 5)
-    # elif event.key == 'up':
-    #     player.set_T(player.get_T() + 5)
-    # elif event.key == 'down':
-    #     player.set_angle(player.get_angle() + 5)
+
 
 fig, _ = plt.subplots()
 fig.canvas.mpl_connect('key_press_event', press)
 
 while is_running:
     plt.clf()
-
     plt.xlim(-10, 10)
     plt.ylim(-10, 10)
 
