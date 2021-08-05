@@ -20,7 +20,7 @@ def rotation_mat(degrees):
     R = np.array([[c, -s, 0],
                   [s, c, 0],
                   [0, 0, 1]])
-    # TODO
+
     return R
 
 
@@ -28,7 +28,6 @@ def translation_mat(dx, dy):
     T = np.array([[1, 0, dx],
                   [0, 1, dy],
                   [0, 0, 1]])
-    # TODO
     return T
 
 
@@ -37,7 +36,6 @@ def scale_mat(sx, sy):
                   [0, sy, 0],
                   [0, 0, 1]])
 
-    # TODO
     return S
 
 
@@ -83,7 +81,7 @@ class Character():
         self.R = np.identity(3)
         self.S = np.identity(3)
 
-        self.pos = np.array([0.0, 5.0])
+        self.pos = np.array([0.0, 0.0])
 
         self.dir_init = np.array([0.0, 0.1])
         self.dir = np.array(self.dir_init)
@@ -94,7 +92,6 @@ class Character():
 
     def set_angle(self, angle):
         self.__angle = angle  # encapsulation
-
         self.R = rotation_mat(self.__angle)
 
 
@@ -102,6 +99,7 @@ class Character():
         return self.__angle
 
     def draw(self):
+
         x_values = []
         y_values = []
         ship_ratio = scale_mat(0.5, 1)
@@ -111,21 +109,20 @@ class Character():
             self.T = translation_mat(self.pos[0], self.pos[1])
 
             vec3d = vec2d_to_vec3d(vec2d)
-            if len(self.geometry) <= 4:
-                vec3d = dot(ship_ratio, vec3d)
+            # if len(self.geometry) <= 4:
+            #     vec3d = dot(ship_ratio, vec3d)
             self.C = dot(self.T, self.R)
             vec3d = dot(self.C, vec3d)
             vec2d = vec3d_to_vec2d(vec3d)
             x_values.append(vec2d[0])
             y_values.append(vec2d[1])
 
-            plt.plot(x_values, y_values, c=self.color)
-           
+        plt.plot(x_values, y_values, c=self.color)
 
-    # def move(self):
-    #     # vec3d = dot(self.R, vec3d)
-    #     # vec2d = vec3d_to_vec2d(vec3d)
-    #     self.pos = np.array([self.R[0][0], self.R[1][0]])
+        self.dir = self.pos
+        new_x = self.dir[0] + self.speed * np.cos(np.radians(self.get_angle()))
+        new_y = self.dir[1] + self.speed * np.sin(np.radians(self.get_angle()))
+        self.pos = np.array([new_x, new_y])
 
 
 class Asteroid(Character):
