@@ -33,7 +33,10 @@ def translation_mat(dx, dy):
 
 
 def scale_mat(sx, sy):
-    S = np.identity(3)
+    S = np.array([[sx, 0, 0],
+                  [0, sy, 0],
+                  [0, 0, 1]])
+
     # TODO
     return S
 
@@ -80,20 +83,20 @@ class Character():
         self.R = np.identity(3)
         self.S = np.identity(3)
 
-        self.pos = np.array([0.0, 0.0])
+        self.pos = np.array([0.0, 5.0])
 
         self.dir_init = np.array([0.0, 0.1])
         self.dir = np.array(self.dir_init)
 
-        self.speed = 0.1
+        self.speed =  0.1
         self.generate_geometry()
-        # self.pos = np.add(self.pos, self.dir)
+
 
     def set_angle(self, angle):
         self.__angle = angle  # encapsulation
 
         self.R = rotation_mat(self.__angle)
-        self.C = dot(self.T, self.R)
+
 
     def get_angle(self):
         return self.__angle
@@ -101,20 +104,23 @@ class Character():
     def draw(self):
         x_values = []
         y_values = []
-        x = 0
+        ship_ratio = scale_mat(0.5, 1)
 
         for vec2d in self.geometry:
+
             self.T = translation_mat(self.pos[0], self.pos[1])
+
             vec3d = vec2d_to_vec3d(vec2d)
+            if len(self.geometry) <= 4:
+                vec3d = dot(ship_ratio, vec3d)
+            self.C = dot(self.T, self.R)
             vec3d = dot(self.C, vec3d)
             vec2d = vec3d_to_vec2d(vec3d)
             x_values.append(vec2d[0])
             y_values.append(vec2d[1])
-            # self.pos = np.array([int(x_values[0+x]), int(y_values[0+x])])
-            # print(self.pos)
-            # x += 1
-            plt.plot(x_values, y_values, c=self.color)
 
+            plt.plot(x_values, y_values, c=self.color)
+           
 
     # def move(self):
     #     # vec3d = dot(self.R, vec3d)
@@ -165,7 +171,7 @@ class Player(Character):
 
 characters = []
 characters.append(Player())
-characters.append(Asteroid())
+# characters.append(Asteroid())
 player = characters[0]
 
 is_running = True
