@@ -15,6 +15,8 @@ plt.ion()
 def rotation_mat(degrees):
     # R = np.identity(3)
     theta = np.radians(degrees)
+
+    print(theta)
     c = np.cos(theta)
     s = np.sin(theta)
     R = np.array([[c, -s, 0],
@@ -92,10 +94,12 @@ class Character():
 
     def set_angle(self, angle):
         self.__angle = angle  # encapsulation
+        print(self.__angle)
         self.R = rotation_mat(self.__angle)
 
 
     def get_angle(self):
+
         return self.__angle
 
     def draw(self):
@@ -106,23 +110,25 @@ class Character():
 
         for vec2d in self.geometry:
 
-            self.T = translation_mat(self.pos[0], self.pos[1])
 
             vec3d = vec2d_to_vec3d(vec2d)
-            # if len(self.geometry) <= 4:
-            #     vec3d = dot(ship_ratio, vec3d)
+            if len(self.geometry) <= 4:
+                vec3d = dot(ship_ratio, vec3d)
+            self.T = translation_mat(self.pos[0], self.pos[1])
             self.C = dot(self.T, self.R)
             vec3d = dot(self.C, vec3d)
             vec2d = vec3d_to_vec2d(vec3d)
             x_values.append(vec2d[0])
             y_values.append(vec2d[1])
-
         plt.plot(x_values, y_values, c=self.color)
 
-        self.dir = self.pos
-        new_x = self.dir[0] + self.speed * np.cos(np.radians(self.get_angle()))
-        new_y = self.dir[1] + self.speed * np.sin(np.radians(self.get_angle()))
+        new_x = self.pos[0] + self.speed * np.cos(np.radians(self.get_angle() + 90))
+        new_y = self.pos[1] + self.speed * np.sin(np.radians(self.get_angle() + 90))
         self.pos = np.array([new_x, new_y])
+        # print(self.pos)
+
+
+
 
 
 class Asteroid(Character):
@@ -195,6 +201,6 @@ while is_running:
 
     for character in characters:  # polymorhism
         character.draw()
-        # character.move()
+
     plt.draw()
     plt.pause(1e-2)
