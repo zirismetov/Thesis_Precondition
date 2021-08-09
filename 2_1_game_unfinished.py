@@ -88,7 +88,6 @@ class Character():
         self.R = rotation_mat(self.__angle)
 
     def get_angle(self):
-
         return self.__angle
 
     def draw(self):
@@ -99,7 +98,6 @@ class Character():
 
         for vec2d in self.geometry:
             vec3d = vec2d_to_vec3d(vec2d)
-
             vec3d = dot(ship_ratio, vec3d)
             self.T = translation_mat(self.pos[0], self.pos[1])
             self.C = dot(self.T, self.R)
@@ -119,13 +117,13 @@ class Asteroid(Character):
         super().__init__()
         self.pos = np.array([np.random.randint(-5, 5), np.random.randint(-5, 5)])
         self.color = 'y'
-        self.speed = random.uniform(0.05, 0.2)
-        self.rand_dir = np.random.randint(0, 360)
+        self.speed = np.random.uniform(0.1, 0.5)
+        self.rand_dir = np.radians(np.random.randint(0, 360))
 
     def generate_geometry(self):
         a = []
         pimult2 = 2 * math.pi
-        r = 0.5
+        r = np.random.uniform(0.5,1.0)
         theta = 0
         while theta <= pimult2:
             x = r * np.cos(theta)
@@ -155,10 +153,19 @@ class Asteroid(Character):
 
         plt.plot(x_values, y_values, c=self.color)
 
-        new_x = self.pos[0] + self.speed * np.cos(np.radians(self.rand_dir))
-        new_y = self.pos[1] + self.speed * np.sin(np.radians(self.rand_dir))
-        if new_x >= 10 or new_x <= -10:
-            self.rand_dir = self.rand_dir * np.pi
+        new_x = self.pos[0] + self.speed * np.cos(self.rand_dir)
+        new_y = self.pos[1] + self.speed * np.sin(self.rand_dir)
+
+
+        if new_x >= 10:
+
+            self.rand_dir -= np.pi
+
+        elif new_x <= -10:
+
+            self.rand_dir += np.pi
+
+
         if new_y >= 10 or new_y <= -10:
             self.rand_dir = -self.rand_dir
 
@@ -180,8 +187,8 @@ class Player(Character):
 characters = [Player()]
 for i in range(10):
     characters.append(Asteroid())
+# characters.append(Asteroid())
 player = characters[0]
-print(characters)
 is_running = True
 
 
