@@ -1,6 +1,4 @@
 import math
-import random
-
 import numpy as np
 
 import matplotlib
@@ -40,11 +38,27 @@ def scale_mat(sx, sy):
 
 
 def dot(X, Y):
-    try:
-        Z = np.dot(X, Y)
-        return Z
-    except NameError:
-        print("errpr")
+    # v = np.dot(X,Y)
+    if Y.ndim >= 2:
+        Z = np.zeros([X.shape[0],Y.shape[1]])
+        for x in range(Z.shape[0]):
+            for y in range(Z.shape[1]):
+                result = 0
+                for i in range(len(Y)):
+                     result += X[x][i] * Y[i][y]
+                Z[x][y] = result
+    else:
+        Z = np.zeros([X.shape[0],Y.ndim])
+        for x in range(Z.shape[0]):
+            for y in range(Z.shape[1]):
+                result = 0
+                for i in range(len(Y)):
+                     result += X[x][i] * Y[i]
+                Z[x][y] = result
+        Z = np.squeeze(Z)
+    # print(Z.shape, Z.ndim)
+    # print(Z)
+    return Z
 
 
 def vec2d_to_vec3d(vec2):
@@ -53,7 +67,7 @@ def vec2d_to_vec3d(vec2):
         [0, 1],
         [0, 0]
     ])
-    vec3 = dot(I, vec2) + np.array([0, 0, 1])
+    vec3 = dot(I, vec2) + np.array([0, 0 ,1])
     return vec3
 
 
@@ -72,6 +86,7 @@ class Character():
         self.__angle = 0
         self.geometry = []
         self.color = 'b'
+        self.T = np.identity(3)
         self.C = np.identity(3)
         self.R = np.identity(3)
         self.S = np.identity(3)
@@ -90,8 +105,9 @@ class Character():
     def get_angle(self):
         return self.__angle
 
-    def draw(self):
+    # def shoot(self):
 
+    def draw(self):
         x_values = []
         y_values = []
         ship_ratio = scale_mat(0.5, 1)
@@ -100,6 +116,7 @@ class Character():
             vec3d = vec2d_to_vec3d(vec2d)
             vec3d = dot(ship_ratio, vec3d)
             self.T = translation_mat(self.pos[0], self.pos[1])
+
             self.C = dot(self.T, self.R)
             vec3d = dot(self.C, vec3d)
             vec2d = vec3d_to_vec2d(vec3d)
@@ -115,15 +132,15 @@ class Character():
 class Asteroid(Character):
     def __init__(self):
         super().__init__()
-        self.pos = np.array([np.random.randint(-5, 5), np.random.randint(-5, 5)])
-        self.color = 'y'
+        self.pos = np.array([np.random.randint(-8, 8), np.random.randint(-8, 8)])
+        self.color = np.random.choice(['y', 'b', 'g'])
         self.speed = np.random.uniform(0.1, 0.5)
         self.rand_dir = np.radians(np.random.randint(0, 360))
 
     def generate_geometry(self):
         a = []
         pimult2 = 2 * math.pi
-        r = np.random.uniform(0.5,1.0)
+        r = np.random.uniform(0.5, 1.0)
         theta = 0
         while theta <= pimult2:
             x = r * np.cos(theta)
@@ -155,21 +172,21 @@ class Asteroid(Character):
 
         new_x = self.pos[0] + self.speed * np.cos(self.rand_dir)
         new_y = self.pos[1] + self.speed * np.sin(self.rand_dir)
-
-
-        if new_x >= 10:
-
-            self.rand_dir -= np.pi
-
-        elif new_x <= -10:
-
-            self.rand_dir += np.pi
-
-
+        if new_x > 10:
+            new_x = 10
+            self.rand_dir *= np.pi
+            if np.cos(self.rand_dir) > 0:
+                self.speed *= -1
+        elif new_x < -10:
+            new_x = -10
+            self.rand_dir /= np.pi
+            if np.cos(self.rand_dir) < 0:
+                self.speed *= -1
         if new_y >= 10 or new_y <= -10:
             self.rand_dir = -self.rand_dir
 
         self.pos = np.array([new_x, new_y])
+
 
 class Player(Character):
     def __init__(self):
@@ -187,7 +204,6 @@ class Player(Character):
 characters = [Player()]
 for i in range(10):
     characters.append(Asteroid())
-# characters.append(Asteroid())
 player = characters[0]
 is_running = True
 
