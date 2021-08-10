@@ -1,4 +1,5 @@
-z = [[1,2,3,4], [1,23,4]]
-b = [1,2,3]
-# c = int(z.) * int(b)
-print(z[0][1])
+from numpy import random
+x = []
+for i in range(5):
+    x.append(random.rand())
+print(x)
