@@ -105,8 +105,6 @@ class Character():
     def get_angle(self):
         return self.__angle
 
-    # def shoot(self):
-
     def draw(self):
         x_values = []
         y_values = []
@@ -114,11 +112,9 @@ class Character():
 
         for vec2d in self.geometry:
             vec3d = vec2d_to_vec3d(vec2d)
-            vec3d = dot(ship_ratio, vec3d)
-            self.T = translation_mat(self.pos[0], self.pos[1])
 
-            self.C = dot(self.T, self.R)
             vec3d = dot(self.C, vec3d)
+
             vec2d = vec3d_to_vec2d(vec3d)
             x_values.append(vec2d[0])
             y_values.append(vec2d[1])
@@ -128,6 +124,9 @@ class Character():
         new_y = self.pos[1] + self.speed * np.sin(np.radians(self.get_angle() + 90))
         self.pos = np.array([new_x, new_y])
 
+        self.T = translation_mat(self.pos[0], self.pos[1])
+        self.C = dot(self.T, self.R)
+        self.C = dot(self.C, ship_ratio)
 
 class Asteroid(Character):
     def __init__(self):
@@ -161,9 +160,9 @@ class Asteroid(Character):
         y_values = []
         for vec2d in self.geometry:
             vec3d = vec2d_to_vec3d(vec2d)
-            self.T = translation_mat(self.pos[0], self.pos[1])
-            self.C = dot(self.T, self.R)
+
             vec3d = dot(self.C, vec3d)
+
             vec2d = vec3d_to_vec2d(vec3d)
             x_values.append(vec2d[0])
             y_values.append(vec2d[1])
@@ -186,6 +185,9 @@ class Asteroid(Character):
             self.rand_dir = -self.rand_dir
 
         self.pos = np.array([new_x, new_y])
+
+        self.T = translation_mat(self.pos[0], self.pos[1])
+        self.C = dot(self.T, self.R)
 
 
 class Player(Character):
