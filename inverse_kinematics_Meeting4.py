@@ -48,12 +48,11 @@ def rotation(theta):
 
 
 def d_rotation(theta):
-    dc = -np.sin(theta)
-    ds = np.cos(theta)
-    dR = np.array([[dc, -ds],
-                   [ds, dc]])
+    c = np.cos(theta)
+    s = np.sin(theta)
+    dR = np.array([[-s, -c],
+                   [c, -s]])
     return dR
-
 
 
 loss = 0
@@ -82,11 +81,11 @@ while is_running:
     joints.append(joint)
 
     joints.append(joint)
-    joint = R_1 @ (segment + R_2 @ segment)
+    joint = R_1 @ (R_2 @ segment + segment)
     joints.append(joint)
 
     joints.append(joint)
-    joint = R_1 @ R_2 @ (R_3 @ segment + segment + segment)
+    joint = R_1 @ ((R_2 @ (R_3 @ segment + segment)) + segment)
     joints.append(joint)
 
     loss = np.sum((target_point - joint) ** 2)
@@ -114,3 +113,4 @@ while is_running:
     plt.pause(1e-3)
     # break
 # input('end')
+
