@@ -86,7 +86,6 @@ while is_running:
 
     joints.append(joint)
     joint = R_1 @ ((R_2 @ (R_3 @ segment + segment)) + segment)
-    print(joint)
     joints.append(joint)
 
     loss = np.sum((target_point - joint) ** 2)
