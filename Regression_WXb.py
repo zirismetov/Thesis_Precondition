@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-# # Task 4
+# # ------------------------------Task from workshop #4
 # import numpy as np
 #
 # X = np.array([1, 2, 3, 5])
@@ -12,13 +12,13 @@ import matplotlib.pyplot as plt
 #     return W * x + b
 #
 # def dW_linear(W, b, x):
-#     return 0 #TODO
+#     return x
 #
 # def db_linear(W, b, x):
-#     return 0 #TODO
+#     return 1
 #
 # def dx_linear(W, b, x):
-#     return 0 #TODO
+#     return W
 #
 # def sigmoid(a):
 #     return 1 / (1 + np.exp(-a))
@@ -67,8 +67,7 @@ import matplotlib.pyplot as plt
 #         epoc = False
 
 
-# # ---------------------------------------Task 5
-# import numpy as np
+# # ---------------------------------------Task 4 from HW
 #
 # X = np.array([1, 2, 3, 5])
 # Y = np.array([0.7, 1.5, 4.5, 9.5])
@@ -155,7 +154,7 @@ import matplotlib.pyplot as plt
 # plt.title("loss")
 # plt.show()
 
-#  -----------------------------------Task 5
+#  -----------------------------------Task 5 from HW
 
 import numpy as np
 
