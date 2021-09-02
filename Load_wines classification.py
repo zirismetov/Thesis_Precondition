@@ -181,9 +181,6 @@
 #
 # loss_train = []
 # loss_test = []
-# acc_train = []
-# acc_test = []
-#
 # for epoch in range(1, 300):
 #
 #     for dataset in [dataset_train, dataset_test]:
@@ -196,8 +193,6 @@
 #
 #             y_prim = model.forward(Variable(x))
 #             loss = loss_fn.forward(Variable(y), y_prim)
-#
-#             accuracy = 0  #TODO
 #             losses.append(loss)
 #             accuracies.append(accuracy)
 #
@@ -226,13 +221,7 @@
 #         plt.title('loss')
 #         plt.plot(loss_train)
 #         plt.plot(loss_test)
-#
-#         plt.subplot(2, 1, 2)
-#         plt.title('acc')
-#         plt.plot(acc_train)
-#         plt.plot(acc_test)
-#         plt.show()
-#
+
 
 
 # -------------------------------
@@ -294,9 +283,6 @@
 #
 # loss_train = []
 # loss_test = []
-# acc_train = []
-# acc_test = []
-#
 # for epoch in range(1, 200):
 #
 #     for dataset in [dataset_train, dataset_test]:
@@ -309,8 +295,6 @@
 #
 #             y_prim = model.forward(torch.FloatTensor(x))
 #             loss = torch.mean(-torch.FloatTensor(y) * torch.log(y_prim))
-#
-#             accuracy = 0  #TODO
 #             losses.append(loss.item())
 #             accuracies.append(accuracy)
 #
@@ -338,9 +322,3 @@
 # plt.title('loss')
 # plt.plot(loss_train)
 # plt.plot(loss_test)
-#
-# plt.subplot(2, 1, 2)
-# plt.title('acc')
-# plt.plot(acc_train)
-# plt.plot(acc_test)
-# plt.show()
