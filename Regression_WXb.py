@@ -161,8 +161,10 @@ import numpy as np
 X = np.array([1, 2, 3, 5])
 Y = np.array([0.7, 1.5, 4.5, 9.5])
 
-W = np.random.random()
-b = 0
+W1 = np.random.random()
+W2 = np.random.random()
+b1 = 0
+b2 = 0
 
 
 def linear(W, b, x):
@@ -195,49 +197,64 @@ def LeakyReLU(z):
     z = np.array(z)
     for i in range(len(z)):
         if z[i] <= 0:
-            z[i] *= learning_rate
+            z[i] *= 0.1
     return z
 
 def der_LeakyReLU(z):
     dz = np.ones_like(z)
-    dz[z<0] = learning_rate
+    dz[z<0] = 0.1
     return dz
 
-def model(w, b, x):
-    return LeakyReLU(linear(w, b, tanh(linear(w, b, x))))
-
-
-def dW_model(W, b, x):
-    return der_LeakyReLU(linear(W, b, tanh(linear(W, b, x)))) * W * da_tanh(linear(W,b,x)) * dW_linear(W, b, x)
-
-def db_model(W, b, x):
-    return der_LeakyReLU(linear(W, b, tanh(linear(W, b, x)))) * W * da_tanh(linear(W,b,x)) * db_linear(W, b, x)
+def model(w1, w2, b1, b2, x):
+    return LeakyReLU(linear(w1, b1, tanh(linear(w2, b2, x))))
 
 def loss(y, y_prim):
     return np.mean(np.abs(y - y_prim))
 
 
-def dW_loss(y, y_prim, W, b, x):  # derivative WRT Loss function
-    return (y - y_prim) / np.abs(y - y_prim) * -(dW_model(W, b, x))
+def dW1_model(w1, w2, b1, b2 , x):
+    return der_LeakyReLU(linear(w1, b1, tanh(linear(w2, b2, x)))) * tanh(linear(w2,b2,x))
+
+def db1_model(w1, w2, b1, b2 , x):
+    return der_LeakyReLU(linear(w1, b1, tanh(linear(w2, b2, x)))) * db_linear(w2,b2,x)
+
+def dW2_model(w1, w2, b1, b2 , x):
+    return der_LeakyReLU(linear(w1, b1, tanh(linear(w2, b2, x)))) * w1 * da_tanh(linear(w2,b2,x)) * x
+
+def db2_model(w1, w2, b1, b2 , x):
+    return der_LeakyReLU(linear(w1, b1, tanh(linear(w2, b2, x)))) * w1 * da_tanh(linear(w2,b2,x))
 
 
-def db_loss(y, y_prim, W, b, x):
-    return (y - y_prim) / np.abs(y - y_prim) * -(db_model(W, b, x))
 
+def dW1_loss(y, y_prim, w1, w2, b1, b2 , x):  # derivative WRT Loss function
+    return (y - y_prim) / np.abs(y - y_prim) * -(dW1_model(w1, w2, b1, b2 , x))
 
-learning_rate = 0.01
+def db1_loss(y, y_prim, w1, w2, b1, b2 , x):
+    return (y - y_prim) / np.abs(y - y_prim) * -(db1_model(w1, w2, b1, b2 , x))
+
+def dW2_loss(y, y_prim, w1, w2, b1, b2 , x):  # derivative WRT Loss function
+    return (y - y_prim) / np.abs(y - y_prim) * -(dW2_model(w1, w2, b1, b2 , x))
+
+def db2_loss(y, y_prim, w1, w2, b1, b2 , x):
+    return (y - y_prim) / np.abs(y - y_prim) * -(db2_model(w1, w2, b1, b2 , x))
+
+learning_rate = 1e-2
 losses = []
 epoc = True
-for i in range(30000):
-    Y_prim = model(W, b, X)
+for i in range(2000):
+    Y_prim = model(W1, W2, b1, b2, X)
     loss1 = loss(Y, Y_prim)
     losses.append(loss1)
 
-    dW_loss1 = np.mean(dW_loss(Y, Y_prim, W, b, X))
-    db_loss1 = np.mean(db_loss(Y, Y_prim, W, b, X))
+    dW1_loss1 = np.mean(dW1_loss(Y, Y_prim, W1, W2 , b1 , b2, X))
+    db1_loss1 = np.mean(db1_loss(Y, Y_prim, W1, W2 , b1 , b2, X))
+    dW2_loss1 = np.mean(dW2_loss(Y, Y_prim, W1, W2, b1, b2, X))
+    db2_loss1 = np.mean(db2_loss(Y, Y_prim, W1, W2, b1, b2, X))
 
-    W -= dW_loss1 * learning_rate
-    b -= db_loss1 * learning_rate
+    W1 -= dW1_loss1 * learning_rate
+    b1 -= db1_loss1 * learning_rate
+    W2 -= dW2_loss1 * learning_rate
+    b2 -= db2_loss1 * learning_rate
 
     print(f'Y_prim: {Y_prim}')
     print(f'loss: {loss1}')
