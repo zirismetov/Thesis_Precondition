@@ -1,6 +1,5 @@
 # # Boston NUMPY regression
 # import time
-# import sys
 # import sklearn.datasets
 # import numpy as np
 # import matplotlib.pyplot as plt
@@ -171,7 +170,7 @@
 # y_min_train = np.min(dataset_train[1])
 # y_max_test = np.max(dataset_test[1])
 # y_min_test = np.min(dataset_test[1])
-# for epoc in range(1, 300):
+# for epoc in range(1, 150):
 #
 #     for dataset in [dataset_train, dataset_test]:
 #         X, Y = dataset
@@ -206,7 +205,8 @@
 #             nrmse_test.append(np.mean(nrmses))
 #             losses_test.append(np.mean(losses))
 #
-#     print(f'epoch: {epoc} losses_train: {losses_train[-1]} losses_test: {losses_test[-1]} rmse_tr: {nrmse_tr[-1]} rmse_test: {nrmse_test[-1]}')
+#     print(f'epoch: {epoc} losses_train: {losses_train[-1]} losses_test: '
+#           f'{losses_test[-1]} rmse_tr: {nrmse_tr[-1]} rmse_test: {nrmse_test[-1]}')
 #
 # plt.subplot(2, 1, 1)
 # plt.title('loss')
@@ -218,23 +218,20 @@
 # plt.plot(nrmse_tr)
 # plt.plot(nrmse_test)
 # plt.show()
-#
-#
-#
+# #
+
 
 # --------------------------------------------------------------
 
 ##### Boston Regression Pytorch
 import time
-import sys
 import sklearn.datasets
 import torch
-import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 
 LEARNING_RATE = 1e-6
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 
 X, Y = sklearn.datasets.load_boston(return_X_y=True)
 
@@ -251,7 +248,7 @@ idxes_rand = np.random.permutation(len(X))
 X = X[idxes_rand]
 Y = Y[idxes_rand]
 
-idx_split = int(len(X) * 0.8)
+idx_split = int(len(X) * 0.75)
 dataset_train = (X[:idx_split], Y[:idx_split])
 dataset_test = (X[idx_split:], Y[idx_split:])
 np.random.seed(int(time.time()))
@@ -261,19 +258,17 @@ class Model(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
-        # self.layers1 = torch.nn.Linear(in_features=13, out_features=7)
-        # self.layers2 = torch.nn.Linear(in_features=7, out_features=1)
-
         self.layers = torch.nn.Sequential(
-            torch.nn.Linear(13, 13),
+            torch.nn.Linear(13, 5),
             torch.nn.Tanh(),
-            torch.nn.Linear(13, 1),
-            torch.nn.LeakyReLU(),
+            torch.nn.Linear(5, 1),
+            torch.nn.LeakyReLU()
         )
 
     def forward(self, x):
         y_prim = self.layers.forward(x)
         return y_prim
+
 
 model = Model()
 opt = torch.optim.SGD(
@@ -290,7 +285,7 @@ y_min_train = np.min(dataset_train[1])
 y_max_test = np.max(dataset_test[1])
 y_min_test = np.min(dataset_test[1])
 
-for epoc in range(1, 700):
+for epoc in range(1, 150):
 
     for dataset in [dataset_train, dataset_test]:
         X, Y = dataset
@@ -305,16 +300,14 @@ for epoc in range(1, 700):
             y = torch.FloatTensor(y)
 
             loss = torch.mean(torch.abs(y - y_prim))
-            losses.append(loss.item())
 
-            # y = y.detach()
-            # y_prim = y_prim.detach()
             scaler = 1 / (y_max_test - y_min_test)
             if dataset == dataset_train:
                 scaler = 1 / (y_max_train - y_min_train)
-            nrmse = scaler * torch.sqrt(torch.mean((y.detach()-y_prim.detach())**2))
+            nrmse = scaler * torch.sqrt(torch.mean((y.detach() - y_prim.detach()) ** 2))
 
             nrmses.append(nrmse.item())
+            losses.append(loss.item())
 
             if dataset is dataset_train:
                 loss.backward()
