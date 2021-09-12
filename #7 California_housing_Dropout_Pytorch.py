@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import torch.utils.data
 from sklearn.model_selection import train_test_split
 
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 1e-4
 BATCH_SIZE = 32
 class DatasetLoadBoston(torch.utils.data.Dataset):
 
@@ -34,7 +34,7 @@ tr_indx = np.arange(len(data))
 
 subset_train_data, subset_test_data = train_test_split(
     tr_indx,
-    test_size=0.20,
+    test_size=0.33,
     random_state=0)
 
 dataset_train = torch.utils.data.Subset(data, subset_train_data)
@@ -56,9 +56,14 @@ class Model(torch.nn.Module):
         self.layers = torch.nn.Sequential(
             torch.nn.Linear(in_features=8, out_features=32),
             torch.nn.LeakyReLU(),
-            torch.nn.Linear(in_features=32, out_features=8),
+            torch.nn.Dropout(0.7),
+            torch.nn.Linear(in_features=32, out_features=64),
             torch.nn.LeakyReLU(),
-            torch.nn.Linear(in_features=8, out_features=1),
+            torch.nn.Dropout(0.7),
+            torch.nn.Linear(in_features=64, out_features=16),
+            torch.nn.LeakyReLU(),
+            torch.nn.Dropout(0.5),
+            torch.nn.Linear(in_features=16, out_features=1),
         )
 
     def forward(self, x):
@@ -86,10 +91,11 @@ R2_test = []
 for epoc in range(1, 50):
 
     for dataloader in [dataloader_train, dataloader_test]:
-
         losses = []
         R2_s = []
-
+        model.train()
+        if dataloader is dataloader_test:
+            model.eval()
         for x, y in dataloader:
 
             y_prim = model.forward(torch.FloatTensor(x.float()))
@@ -100,6 +106,8 @@ for epoc in range(1, 50):
 
             losses.append(loss.item())
             R2_s.append(R2.item())
+
+
             if dataloader is dataloader_train:
                 loss.backward()
                 opt.step()
@@ -118,17 +126,27 @@ for epoc in range(1, 50):
         f'losses_train: {round(losses_train[-1], 4)} '
         f'losses_test: {round(losses_test[-1], 4)} '
         f'R2_train: {round(R2_train[-1], 4)} '
-        f'R2_test {round(R2_test[-1], 4)}')
+        f'R2_test {round(R2_test[-1], 4)} ')
 
 plt.subplot(2, 1, 1)
-plt.title('loss')
+plt.title('Loss graph')
+plt.xlabel('epochs')
 plt.plot(losses_train, label="loss_trian")
 plt.plot(losses_test, label="loss_test")
 plt.legend(loc='upper right', shadow=False, fontsize='medium')
+for var in (losses_train, losses_test):
+    plt.annotate('%0.2f' % min(var), xy=(1, min(var)), xytext=(8, 0),
+                 xycoords=('axes fraction', 'data'), textcoords='offset points')
 
 plt.subplot(2, 1, 2)
 plt.title('R2')
+plt.xlabel('epochs')
 plt.plot(R2_train, label="R2_trian")
 plt.plot(R2_test, label="R2_test")
 plt.legend(loc='lower right', shadow=False, fontsize='medium')
+for var in (R2_train, R2_test):
+    plt.annotate('%0.2f' % max(var), xy=(1, max(var)), xytext=(8, 0),
+                 xycoords=('axes fraction', 'data'), textcoords='offset points')
+
+plt.tight_layout()
 plt.show()

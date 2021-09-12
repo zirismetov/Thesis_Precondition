@@ -6,21 +6,26 @@ import torch.utils.data
 import matplotlib.pyplot as plt
 
 LEARNING_RATE = 0.01
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 
+def R2_compute(y, y_prim):
+    sum_of_errors = np.sum((y.value - y_prim.value) ** 2)
+    denominator = np.sum((y.value - np.mean(y.value)) ** 2)
+    r2 = 1 - sum_of_errors / denominator
+    return r2
 
 class DatasetLoadBoston(torch.utils.data.Dataset):
 
     def __init__(self):
-        dataset = sklearn.datasets.load_boston()
+        dataset = sklearn.datasets.fetch_california_housing()
         self.X = dataset.data
         self.y = dataset.target
         np_x = np.copy(self.X)
         for i in range(np_x.shape[-1]):
-            self.X[:, i] = ((np_x[:, i] - np.min(np_x[:, i])) / (np.max(np_x[:, i]) - np.min(np_x[:, i])))
+            self.X[:, i] = 1 * ((np_x[:, i] - np.min(np_x[:, i])) / (np.max(np_x[:, i]) - np.min(np_x[:, i])))
 
         np_y = np.copy(self.y)
-        self.y[:] = ((np_y[:] - np.min(np_y[:])) / (np.max(np_y[:]) - np.min(np_y[:])))
+        self.y[:] = 1* ((np_y[:] - np.min(np_y[:])) / (np.max(np_y[:]) - np.min(np_y[:])))
         self.y = np.expand_dims(self.y, axis=1)
 
     def __len__(self):
@@ -60,10 +65,10 @@ class Variable:
 class LayerLinear():
     def __init__(self, in_features: int, out_features: int):
         self.W = Variable(
-            value=np.random.random((out_features, in_features))
+            value=np.random.rand(out_features, in_features)
         )
         self.b = Variable(
-            value=np.zeros((out_features,))
+            value=np.zeros(out_features,)
         )
         self.x: Variable = None
         self.output: Variable = None
@@ -92,6 +97,7 @@ class LayerLinear():
         ).transpose()
 
 
+
 class LeakyReLU:
     def __init__(self):
         self.x = None
@@ -110,7 +116,7 @@ class LeakyReLU:
 
     def backward(self):
         self.x.grad = np.ones_like(self.x.value)
-        self.x.grad[self.x.value < 0] = 0.01
+        self.x.grad[self.x.value < 0] = 0.001
 
 
 class LossMAE:
@@ -127,7 +133,6 @@ class LossMAE:
 
     def backward(self):
         self.y_prim.grad = - (self.y.value - self.y_prim.value) / np.abs(self.y.value - self.y_prim.value)
-
 
 class Dropout:
     def __init__(self, keep_rate):
@@ -153,12 +158,14 @@ class Dropout:
 class Model:
     def __init__(self):
         self.layers = [
-            LayerLinear(in_features=13, out_features=26),
+            LayerLinear(in_features=8, out_features=32),
             LeakyReLU(),
-            # Dropout(keep_rate=0.8),
-            # LayerLinear(in_features=56, out_features=26),
-            # LeakyReLU(),
-            LayerLinear(in_features=26, out_features=1)
+            # Dropout(keep_rate=0.5),
+            LayerLinear(in_features=32, out_features=32),
+            LeakyReLU(),
+            # Dropout(keep_rate=0.5),
+            LayerLinear(in_features=32, out_features=1),
+
         ]
 
     def forward(self, x: Variable, is_train):
@@ -181,6 +188,7 @@ class Model:
         for layer in reversed(self.layers):
             layer.backward()
 
+
     def parameters(self):
         variables = []
         for i, layer in enumerate(self.layers):
@@ -200,14 +208,6 @@ class OptimizerSGD:
             param.value -= self.learning_rate * np.mean(param.grad, axis=0)
 
 
-
-def R2_compute(y, y_prim):
-    sum_of_errors = np.sum((y.value - y_prim.value) ** 2)
-    denominator = np.sum((y.value - np.mean(y.value)) ** 2)
-    k = sklearn.metrics.r2_score(y.value, y_prim.value)
-    r2 = 1 - sum_of_errors / denominator
-    return r2
-
 model = Model()
 opt = OptimizerSGD(
     parameters=model.parameters(),
@@ -218,7 +218,7 @@ losses_train = []
 losses_test = []
 R2_train = []
 R2_test = []
-for epoch in range(1, 100):
+for epoch in range(1, 50):
 
     is_train = True
     for dataset in [dataloader_train, dataloader_test]:
@@ -236,8 +236,9 @@ for epoch in range(1, 100):
             y_prim = model.forward(Variable(x), is_train=is_train)
 
             loss = loss_fn.forward(Variable(y), y_prim)
-
             R2 = R2_compute(Variable(y), y_prim)
+
+
 
             R2_s.append(R2)
             losses.append(loss)
@@ -246,6 +247,7 @@ for epoch in range(1, 100):
                 loss_fn.backward()
                 model.backward()
                 opt.step()
+
 
 
 
@@ -260,7 +262,8 @@ for epoch in range(1, 100):
           f'losses_train: {round(losses_train[-1], 3)} '
           f'losses_test: {round(losses_test[-1], 3)} '
           f'R2_train: {round(R2_train[-1], 3)} '
-          f'R2_test: {round(R2_test[-1], 3)}')
+          f'R2_test: {round(R2_test[-1], 3)} '
+          )
 
 plt.subplot(2, 1, 1)
 plt.title('loss')
@@ -274,7 +277,3 @@ plt.plot(R2_train, label="R2_trian")
 plt.plot(R2_test, label="R2_test")
 plt.legend(loc='lower right', shadow=False, fontsize='medium')
 plt.show()
-
-
-
-#
