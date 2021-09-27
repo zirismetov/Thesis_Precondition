@@ -15,26 +15,16 @@ import numpy as np
 parser = argparse.ArgumentParser(description="CalCOFI hypermarkets")
 parser.add_argument('-sequence_name', type=str, default='sequence')
 parser.add_argument('-run_name', type=str, default=str(time.time()))
-parser.add_argument('-lr', type=float, default=1e-4)
-parser.add_argument('-batch_size', type=int, default=32)
 parser.add_argument(
-    '-script',
-    default='8_CalCOFI_regress.py',
-    type=str)
+                    '-script',
+                    default='8_CalCOFI_regress.py',
+                    type=str)
 parser.add_argument(
-    '-num_repeat',
-    help='how many times each set of parameters should be repeated for testing stability',
-    default=1,
-    type=int)
-parser.add_argument('-test_size',
-                    type=float,
-                    default=0.20)
-parser.add_argument('-epoch',
-                    type=int,
-                    default=10)
-parser.add_argument('-dropout_mode',
-                    type=bool,
-                    default=True)
+                    '-num_repeat',
+                    help='how many times each set of parameters should be repeated for testing stability',
+                    default=1,
+                    type=int)
+
 parser.add_argument('-file_path',
                     type=str,
                     default='/Users/zafarzhonirismetov/Desktop/weatherHistory.csv')
@@ -59,6 +49,7 @@ parser.add_argument('-is_force_start', default=True, type=lambda x: (str(x).lowe
 
 args, args_other = parser.parse_known_args()
 args = args_utils.ArgsUtils.add_other_args(args, args_other)
+logging.warning(args.layer_size)
 args.sequence_name_orig = args.sequence_name
 args.sequence_name += ('-' + datetime.utcnow().strftime(f'%y-%m-%d-%H-%M-%S'))
 
@@ -108,10 +99,7 @@ if hasattr(args, 'tf_path_test'):
     if isinstance(args.tf_path_train, list):
         args.tf_path_train = ' '.join(args.tf_path_train)
 
-args_with_multiple_values = {'lr': [1e-2, 1e-3],
-                             'dropout_mode': [True, False],
-                             'batch_size': [32, 64]
-                             }
+args_with_multiple_values = {}
 for key, value in args.__dict__.items():
     if isinstance(value, list):
         if len(value) > 1:

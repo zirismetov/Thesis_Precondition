@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/../Dropout-Regularization/.idea/Dropout-Regularization.iml" filepath="$PROJECT_DIR$/../Dropout-Regularization/.idea/Dropout-Regularization.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/asteroid_game.iml" filepath="$PROJECT_DIR$/.idea/asteroid_game.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../gaussian_dropout/.idea/gaussian_dropout.iml" filepath="$PROJECT_DIR$/../gaussian_dropout/.idea/gaussian_dropout.iml" />
     </modules>
   </component>
 </project>

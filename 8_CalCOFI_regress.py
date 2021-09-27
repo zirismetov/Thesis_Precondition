@@ -5,18 +5,49 @@ import torch.utils.data
 from sklearn.model_selection import train_test_split
 import argparse
 import time
+import logging
 from datetime import datetime
+# from tqdm import tqdm
 from taskgen_files import csv_utils_2, args_utils, file_utils
 
 parser = argparse.ArgumentParser(description="Weather hypermarkets")
-parser.add_argument('-sequence_name', type=str, default='sequence')
-parser.add_argument('-run_name', type=str, default=str(time.time()))
-parser.add_argument('-lr', type=float, default=1e-2)
-parser.add_argument('-batch_size', type=int, default=32)
-parser.add_argument('-test_size', type=float, default=0.20)
-parser.add_argument('-epoch', type=int, default=10)
-parser.add_argument('-dropout_mode', type=str, default='False')
-parser.add_argument('-data_file_path', type=str, default='/Users/zafarzhonirismetov/Desktop/Work/CalCOFI/bottle.csv')
+parser.add_argument('-sequence_name',
+                            type=str,
+                            default='sequence')
+parser.add_argument('-run_name',
+                            type=str,
+                            default=str(time.time()))
+parser.add_argument('-lr',
+                            type=float,
+                            default=0.01)
+parser.add_argument('-batch_size',
+                            type=int,
+                            default=64)
+parser.add_argument('-test_size',
+                            type=float,
+                            default=0.20)
+parser.add_argument('-epoch',
+                            type=int,
+                            default=5)
+parser.add_argument('-dropout_mode',
+                            default='False',
+                            type=str)
+parser.add_argument('-layer_count',
+                            default=3,
+                            type=int)
+parser.add_argument('-layer_size',
+                            type=str,
+                            default='1,32,32,32,1')
+# parser.add_argument('-dropout_every',
+#                             default=False,
+#                             type=lambda x: (str(x).lower() == 'true'))
+
+parser.add_argument('-is_debug',
+                            default=True,
+                            type=lambda x: (str(x).lower() == 'true'))
+parser.add_argument('-data_file_path',
+                            type=str,
+                            default='/Users/zafarzhonirismetov/Desktop/Work/CalCOFI/bottle.csv')
 
 args, args_other = parser.parse_known_args()
 args = args_utils.ArgsUtils.add_other_args(args, args_other)
@@ -26,10 +57,17 @@ args.sequence_name += ('-' + datetime.utcnow().strftime(f'%y-%m-%d-%H-%M-%S'))
 data_raw = pd.read_csv(args.data_file_path, low_memory=False)
 
 # Predict temperature of water 1 features: salinity
-data_raw = data_raw[['Salnty','T_degC']]
+data_raw = data_raw[['Salnty', 'T_degC']]
 data_raw['Salnty'].replace(0, np.nan, inplace=True)
 data_raw['T_degC'].replace(0, np.nan, inplace=True)
 data_raw.fillna(method='pad', inplace=True)
+
+
+removebrac = "[]"
+args.layer_size = ''.join(args.layer_size)
+for char in removebrac:
+    args.layer_size = args.layer_size.replace(char, "")
+args.layer_size = args.layer_size.split(',')
 
 class DatasetLoadColCOFI(torch.utils.data.Dataset):
 
@@ -45,6 +83,8 @@ class DatasetLoadColCOFI(torch.utils.data.Dataset):
         self.y = np.expand_dims(self.y, axis=1)
 
     def __len__(self):
+        if args.is_debug:
+            return 100
         return len(self.y)
 
     def __getitem__(self, item):
@@ -76,22 +116,36 @@ class Model(torch.nn.Module):
     def __init__(self, dropout_mode):
         super(Model, self).__init__()
 
-        if dropout_mode == 'True':
+        if dropout_mode == 'true_every' or dropout_mode == 'true_last':
             prob = 0.5
         else:
             prob = 0
-
-        self.layers = torch.nn.Sequential(
-            torch.nn.Linear(in_features=1, out_features=256),
-            torch.nn.LeakyReLU(),
-            torch.nn.Dropout(p=prob),
-            torch.nn.Linear(in_features=256, out_features=256),
-            torch.nn.LeakyReLU(),
-            torch.nn.Dropout(p=prob),
-            torch.nn.Linear(in_features=256, out_features=64),
-            torch.nn.LeakyReLU(),
-            torch.nn.Linear(in_features=64, out_features=1),
-        )
+        self.layers = torch.nn.Sequential()
+        for l in range(args.layer_count):
+            self.layers.add_module(f'linear_{l + 1}',
+                                   torch.nn.Linear(int(args.layer_size[l]), int(args.layer_size[l + 1])))
+            if dropout_mode == 'true_every':
+                self.layers.add_module(f'Dropout{l + 1}',
+                                       torch.nn.Dropout(p=prob))
+            if l != args.layer_count:
+                self.layers.add_module(f'ReLU{l + 1}',
+                                       torch.nn.LeakyReLU())
+        if dropout_mode == 'true_last':
+            self.layers.add_module('Dropout_last',
+                                   torch.nn.Dropout(p=prob))
+        self.layers.add_module('linear_last',
+                               torch.nn.Linear(int(args.layer_size[-2]), int(args.layer_size[-1])))
+        # self.layers = torch.nn.Sequential(
+        #     torch.nn.Linear(in_features=1, out_features=128),
+        #     torch.nn.LeakyReLU(),
+        #     torch.nn.Dropout(p=prob),
+        #     torch.nn.Linear(in_features=128, out_features=128),
+        #     torch.nn.LeakyReLU(),
+        #     torch.nn.Dropout(p=prob),
+        #     torch.nn.Linear(in_features=128, out_features=64),
+        #     torch.nn.LeakyReLU(),
+        #     torch.nn.Linear(in_features=64, out_features=1),
+        # )
 
     def forward(self, x):
         y_prim = self.layers.forward(x)
